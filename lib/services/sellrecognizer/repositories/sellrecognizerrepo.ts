@@ -1,10 +1,8 @@
 import { BaseRepo } from '../../../repositories/baserepo';
 import UserRepo from './dbcontext/userrepo';
 import MaterialRepo from './dbcontext/materialrepo';
-import ProcessStepRepo from './dbcontext/processstepsrepo';
-import { User } from '../shared/models/user';
-import { Material } from '../shared/models/material';
-import { ProcessStep } from '../shared/models/processstep';
+import MaterialProcessRepo from './dbcontext/materialprocessrepo';
+import { User, Material, MaterialProcess } from '../shared/models';
 
 ///<reference path="../services/sellrecognizer.ts"/>
 
@@ -20,8 +18,8 @@ class SellRecognizerRepo extends BaseRepo {
     return res;
   };
 
-  getProcessStep = async (ownerId: string): Promise<ProcessStep | null> => {
-    const entity: ProcessStep | null = await ProcessStepRepo.findOneBy({ ownerId: ownerId });
+  getMaterialProcess = async (ownerId: string): Promise<MaterialProcess | null> => {
+    const entity: MaterialProcess | null = await MaterialProcessRepo.findOneBy({ ownerId: ownerId });
     return entity;
   };
 }

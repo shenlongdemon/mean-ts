@@ -1,6 +1,6 @@
 import { BaseMongo } from '../../../../repositories/mongo/basemongo';
 import { Config } from './config';
-import { Material } from '../../shared/models/material';
+import { Material } from '../../shared/models';
 
 class MaterialRepo extends BaseMongo<Material> {
   constructor() {

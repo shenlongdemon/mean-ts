@@ -2,6 +2,7 @@ import {DynProperty} from "./dynproperty";
 
 export interface ProcessStep {
   id: string;
-  data: any;
+  name: string;
+  index: number;
   dynProperties: DynProperty[];
 }

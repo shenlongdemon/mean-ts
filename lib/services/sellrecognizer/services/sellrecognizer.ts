@@ -3,9 +3,7 @@ import {CreateMaterialReq, LoginReq} from './requests';
 import sellRepo from '../repositories/sellrecognizerrepo';
 import {BusErr} from '../../models/buserr';
 import {BUS_ERR_CODE} from '../../commons/index';
-import {User} from "../shared/models/user";
-import {ProcessStep} from "../shared/models/processstep";
-import {Material} from "../shared/models/material";
+import {User, ProcessStep, Material, MaterialProcess, Process} from "../shared/models";
 
 const uuid = require('uuid');
 
@@ -20,24 +18,31 @@ class SellRecognizer extends BaseService {
   };
   
   createMaterial = async (req: CreateMaterialReq): Promise<Material> => {
-    const processStep: ProcessStep | null = await sellRepo.getProcessStep(req.ownerId);
-    if (!processStep) {
+    const materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcess(req.ownerId);
+    if (!materialProcess) {
       throw new BusErr(BUS_ERR_CODE.HAVE_NO_PROCESS_STEP());
     }
+    
+    const processes: Process[] = [];
+    materialProcess.processSteps.forEach((processStep: ProcessStep, index: number) => {
+      const process: Process = {
+        ...processStep,
+        activities: [],
+        workers: []
+      };
+      processes.push(process);
+    });
     
     const entity: Material = {
       ...req,
       id: uuid.v4(),
       createdAt: this.getTime(),
       updatedAt: this.getTime(),
-      code: this.genUserInfoCode('OWNER ' + req.name, req.userInfo)
+      code: this.genUserInfoCode('OWNER ' + req.name, req.userInfo),
+      processes: processes
     };
     
     const res: boolean = await sellRepo.insertMaterial(entity);
-    if (!res) {
-      throw new BusErr(BUS_ERR_CODE.HAVE_NO_PROCESS_STEP());
-    }
-    
     return entity;
   };
 }

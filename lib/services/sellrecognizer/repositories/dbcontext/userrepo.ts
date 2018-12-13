@@ -1,6 +1,6 @@
 import { BaseMongo } from '../../../../repositories/mongo/basemongo';
 import { Config } from './config';
-import { User } from '../../shared/models/user';
+import { User } from '../../shared/models';
 class UserRepo extends BaseMongo<User> {
   constructor() {
     super(Config.DB.URL, Config.DB.NAME, Config.COLlECTIONS.USERS);

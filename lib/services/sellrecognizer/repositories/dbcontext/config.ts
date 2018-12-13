@@ -7,7 +7,7 @@ const Config = {
   COLlECTIONS: {
     USERS: 'Users',
     MATERIALS: 'Materials',
-    PROCESSSTEPS: 'ProcessSteps'
+    MATERIALPROCESSES: 'MaterialProcesses',
   }
 };
 

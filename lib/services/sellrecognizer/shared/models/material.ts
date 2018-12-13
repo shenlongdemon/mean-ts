@@ -1,4 +1,7 @@
 import {IObject} from "./iobject";
+import {UserInfo} from "./userinfo";
+import {ProcessStep} from "./processstep";
+import {Process} from "./process";
 
 export interface Material extends IObject{
   name: string;
@@ -9,4 +12,6 @@ export interface Material extends IObject{
   imageUrl: string;
   createdAt: number;
   updatedAt: number;
+  userInfo: UserInfo;
+  processes: Process[];
 }

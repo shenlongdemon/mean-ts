@@ -1,6 +1,6 @@
 import {IObject} from "./iobject";
 
-export enum DynPropertyType {
+ enum DynPropertyType {
   TEXT = 'TEXT',
   CHECKBOX = 'CHECKBOX',
   RADIO = 'RADIO',
@@ -9,7 +9,7 @@ export enum DynPropertyType {
   COMBOBOX = 'COMBOBOX'
 }
 
-export interface DynProperty extends IObject {
+ interface DynProperty extends IObject {
   type: DynPropertyType;
   title: string;
   value: string,
