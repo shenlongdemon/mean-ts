@@ -23,14 +23,13 @@ class SellRecognizer extends BaseService {
       throw new BusErr(BUS_ERR_CODE.HAVE_NO_PROCESS_STEP());
     }
     
-    const processes: Process[] = [];
-    materialProcess.processSteps.forEach((processStep: ProcessStep, index: number) => {
+    const processes: Process[] = materialProcess.processSteps.map((processStep: ProcessStep, index: number) => {
       const process: Process = {
         ...processStep,
         activities: [],
         workers: []
       };
-      processes.push(process);
+      return process;
     });
     
     const entity: Material = {

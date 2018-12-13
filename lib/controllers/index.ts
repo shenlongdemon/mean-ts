@@ -1,11 +1,14 @@
-import {Request, Response} from 'express';
+import {Request, RequestHandler, Response} from 'express';
 import {ApiResult} from '../services/models';
-import {CONSTANTS, API_STATUS_CODE} from '../services/commons';
+import {CONSTANTS, API_STATUS_CODE, HTTP_CODE} from '../services/commons';
 import {BusErr} from '../services/models/buserr';
 import SellRecognizer from '../services/sellrecognizer/services/sellrecognizer';
 import {NextFunction} from 'express-serve-static-core';
 
 const safeJsonStringify = require('safe-json-stringify');
+import * as multer from 'multer';
+
+import * as fs from 'fs';
 
 export class Controller {
   private map: { [name: string]: {} } = {};
@@ -16,6 +19,42 @@ export class Controller {
   
   private mapServices = (): void => {
     this.map['SellRecognizer'.toLowerCase()] = SellRecognizer;
+  };
+  
+  doUpload = async (request: Request, response: Response, next: NextFunction): Promise<void> => {
+    
+    const serviceName: string = request.params.controller.toLowerCase();
+    console.log('POST upload file to ' + serviceName);
+  
+    try {
+      const storage = multer.diskStorage({
+        destination: (req: Express.Request, file: Express.Multer.File, callback: (error: Error | null, destination: string) => void) => {
+          const destination: string = `./static/public/${serviceName}/`;
+          if (!fs.existsSync(destination)){
+            fs.mkdirSync(destination);
+          }
+          console.log('upload into ' + destination)
+          callback(null, destination)
+        },
+        filename: (req: Express.Request, file: Express.Multer.File, callback: (error: Error | null, filename: string) => void): void => {
+          const overwritten = Object.assign({}, file, {buffer: null});
+          console.log('upload file ' + safeJsonStringify(overwritten))
+          callback(null, file.originalname);
+        }
+      });
+      const multerInstance: RequestHandler = multer({storage: storage}).array('files', 3);
+      
+      const res  =  multerInstance(request, response, next);
+      const apiResult: ApiResult = {
+        code: API_STATUS_CODE.OK,
+        message: CONSTANTS.STR_EMPTY,
+        data: res
+      };
+      response.status(HTTP_CODE.OK).json(apiResult);
+      
+    } catch (ex) {
+      this.handleException(ex, request, response);
+    }
   };
   
   doPost = async (request: Request, response: Response, next: NextFunction): Promise<void> => {
@@ -31,7 +70,7 @@ export class Controller {
         message: CONSTANTS.STR_EMPTY,
         data: res
       };
-      response.status(200).json(apiResult);
+      response.status(HTTP_CODE.OK).json(apiResult);
     } catch (ex) {
       this.handleException(ex, request, response);
     }
@@ -60,7 +99,7 @@ export class Controller {
         message: CONSTANTS.STR_EMPTY,
         data: res
       };
-      response.status(200).json(apiResult);
+      response.status(HTTP_CODE.OK).json(apiResult);
     } catch (ex) {
       this.handleException(ex, request, response);
     }
@@ -69,10 +108,10 @@ export class Controller {
   private handleException = (ex: any, request: Request, response: Response): void => {
     if (ex instanceof BusErr) {
       const res: ApiResult = this.handleError(ex, request, response);
-      response.status(200).json(res);
+      response.status(HTTP_CODE.OK).json(res);
     } else {
       const res: ApiResult = this.handleCommonError(ex, request, response);
-      response.status(200).json(res);
+      response.status(HTTP_CODE.OK).json(res);
     }
   }
   
@@ -91,7 +130,7 @@ export class Controller {
       }
     };
     console.log(safeJsonStringify(res));
-  
+    
     return res;
   };
   
@@ -106,7 +145,7 @@ export class Controller {
       }
     };
     console.log(safeJsonStringify(res));
-  
+    
     return res;
   };
 }

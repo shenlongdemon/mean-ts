@@ -45,11 +45,14 @@ class App {
     this.app.use(bodyParser.urlencoded({ extended: true }));
 
     // static
+    this.app.use(express.static(__dirname + '/../static/public'));
     this.app.use('/', express.static(__dirname + '/../static/portal/dist/ng7-pre'));
     this.app.use(this.errorRequestHandler);
 
     this.app.post('/api/:controller/:action', Controller.doPost);
     this.app.get('/api/:controller/:action', Controller.doGet);
+    
+    this.app.post('/upload/:controller', Controller.doUpload);
   }
 }
 

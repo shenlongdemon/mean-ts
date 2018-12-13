@@ -27,6 +27,7 @@ mongod --dbpath /Users/nguyenthanhlong/DATA/mongodb
 ```
 
 ### Create Index for searching
+
 - Open terminal/cmd 
 - Go to bin directory of mongodb
 - Run command "mongo"
@@ -35,3 +36,12 @@ mongod --dbpath /Users/nguyenthanhlong/DATA/mongodb
 - We can view list of collections by command "show collections"
 - Create index for searching on collection "Items" based on field "name"
     + db.Items.createIndex({name:"text"})
+    
+# UPLOAD FILES
+
+- We save on `./static/public/<service>`
+- And we `this.app.use(express.static(__dirname + '/../static/public'));`
+- So when we want to retrieve files, we can use link
+  ```bash
+  http://host:port/<service>/filename.extention
+  ```
