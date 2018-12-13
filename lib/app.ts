@@ -22,12 +22,12 @@ class App {
     response.status(HTTP_CODE.OK).json(res);
   };
 
-  private handleError = (ex: any, request: Request, response: Response): ApiResult => {
+  private handleError = (err: any, request: Request, response: Response): ApiResult => {
     const res: ApiResult = {
       code: API_STATUS_CODE.EXCEPTION,
       message: 'Internal server error !',
       data: {
-        data: JSON.parse(safeJsonStringify(ex)),
+        data: JSON.parse(safeJsonStringify(err)),
         request: JSON.parse(safeJsonStringify(request)),
         response: JSON.parse(safeJsonStringify(response))
       }
