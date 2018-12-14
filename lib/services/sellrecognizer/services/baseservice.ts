@@ -16,12 +16,6 @@ export class BaseService {
     '[]{}'
   ];
 
-  protected getTime = (): number => {
-    const d = new Date();
-    const time = d.getTime();
-    return time;
-  };
-
   protected genUserInfoCode = (action: string, userInfo: UserInfo): string => {
     const allStr =
       '[' +

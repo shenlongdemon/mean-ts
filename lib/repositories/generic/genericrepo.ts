@@ -1,6 +1,6 @@
 export interface GenericRepo<T> {
   find(item: T): Promise<T[]>;
-  findOne(id: string): Promise<T>;
+  findOne(id: string): Promise<T | null>;
   findOneBy(expr: {}): Promise<T | null>;
   create(item: T): Promise<boolean>;
   update(id: string, item: T): Promise<boolean>;

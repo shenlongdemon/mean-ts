@@ -6,6 +6,6 @@ export interface Activity extends IObject {
   description: string;
   time: number;
   image: string;
-  files: string;
+  file: string;
   userInfo: UserInfo;
 }

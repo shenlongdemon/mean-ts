@@ -5,9 +5,9 @@ import {
   InsertOneWriteOpResult,
   MongoClientOptions,
   MongoCallback,
-  MongoError
+  MongoError, UpdateWriteOpResult, Cursor, DeleteWriteOpResultObject
 } from 'mongodb';
-import { GenericRepo } from '../generic/genericrepo';
+import {GenericRepo} from '../generic/genericrepo';
 
 // that class only can be extended
 export abstract class BaseMongo<T> implements GenericRepo<T> {
@@ -15,10 +15,10 @@ export abstract class BaseMongo<T> implements GenericRepo<T> {
   // that extends your base repository and reuse on methods of class
   public db!: Db;
   public collection!: Collection;
-
+  
   //we created constructor with arguments to manipulate mongodb operations
   protected constructor(connectionString: string, dbName: string, collectionName: string) {
-    const client: MongoClient = new MongoClient(connectionString,{ useNewUrlParser: true });
+    const client: MongoClient = new MongoClient(connectionString, {useNewUrlParser: true});
     client.connect(
       (error: MongoError, connect: MongoClient): void => {
         if (error) {
@@ -31,7 +31,7 @@ export abstract class BaseMongo<T> implements GenericRepo<T> {
       }
     );
   }
-
+  
   // we add to method, the async keyword to manipulate the insert result
   // of method.
   async create(item: T): Promise<boolean> {
@@ -40,18 +40,29 @@ export abstract class BaseMongo<T> implements GenericRepo<T> {
     // and we convert to boolean result (0 false, 1 true)
     return !!result.result.ok;
   }
-
-  update(id: string, item: T): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  
+  update = async (id: string, item: T, replace: boolean | null = false): Promise<boolean> => {
+      const result: UpdateWriteOpResult = await this.collection.updateOne({id: id}, {$set: item});
+      return !!result.result.ok;
   }
-  delete(id: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  
+  replace = async (id: string, item: T, replace: boolean | null = false): Promise<boolean> => {
+    const result: UpdateWriteOpResult = await this.collection.replaceOne({id: id}, {$set: item});
+    return !!result.result.ok;
   }
-  find(item: T): Promise<T[]> {
-    throw new Error('Method not implemented.');
+  
+  delete = async (id: string): Promise<boolean> => {
+    const result: DeleteWriteOpResultObject = await this.collection.deleteOne({id: id});
+    return !!result.result.ok  }
+  
+  find = async (query: {}): Promise<T[]> => {
+    const result: Cursor<T> = await this.collection.find(query);
+    return result.toArray();
   }
-  findOne(id: string): Promise<T> {
-    throw new Error('Method not implemented.');
+  
+  findOne = async (id: string): Promise<T | null> => {
+    const res: T | null = await this.collection.findOne({id: id});
+    return res;
   }
   findOneBy = async (expr: {}): Promise<T | null> => {
     const res: T | null = await this.collection.findOne(expr);

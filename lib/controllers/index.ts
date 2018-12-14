@@ -1,6 +1,6 @@
 import {Request, RequestHandler, Response} from 'express';
 import {ApiResult} from '../services/models';
-import {CONSTANTS, API_STATUS_CODE, HTTP_CODE, BUS_ERR_CODE} from '../services/commons';
+import {CONSTANTS, API_STATUS_CODE, HTTP_CODE, SYSTEM_ERR_CODE} from '../services/commons';
 import {BusErr} from '../services/models/buserr';
 import SellRecognizer from '../services/sellrecognizer/services/sellrecognizer';
 import {NextFunction} from 'express-serve-static-core';
@@ -117,7 +117,7 @@ export class Controller {
   private getService(serviceName: string): any {
     const service = this.map[serviceName.toLowerCase()];
     if (service === null || service === undefined) {
-      throw new BusErr(BUS_ERR_CODE.HAVE_NO_SERVICE());
+      throw new BusErr(SYSTEM_ERR_CODE.HAVE_NO_SERVICE());
     }
     return service;
   }
