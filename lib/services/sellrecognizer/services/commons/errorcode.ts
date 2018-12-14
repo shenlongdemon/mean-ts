@@ -9,6 +9,9 @@ const BUS_ERR_CODE = {
   },
   HAVE_NO_PROCESS_STEP: (): ErrorData => {
     return { code: 1001, message: 'You did not create process on website yet. ' };
+  },
+  HAVE_NO_SERVICE: (): ErrorData => {
+    return { code: 1002, message: 'Cannot identify service to process.' };
   }
 };
 

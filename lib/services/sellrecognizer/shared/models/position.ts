@@ -1,5 +1,7 @@
-import { Coord } from './coord';
 
 export interface Position {
-  coord: Coord;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  distance: number;
 }

@@ -1,6 +1,5 @@
 import {IObject} from "./iobject";
 import {UserInfo} from "./userinfo";
-import {ProcessStep} from "./processstep";
 import {Process} from "./process";
 
 export interface Material extends IObject{

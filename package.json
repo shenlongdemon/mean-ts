@@ -10,7 +10,8 @@
     "deplop-node": "npm install && npm run build",
     "deploy-web": "cd ./static/portal && npm run deploy",
     "run-prod": "npm run deploy-web && npm run deplop-node && npm run start-prod",
-    "web": "cd ./static/portal && npm run start"
+    "web": "cd ./static/portal && npm run start",
+    "mongo": "mongod --dbpath /Users/nguyenthanhlong/DATA/mongodb"
   },
   "author": "",
   "license": "ISC",

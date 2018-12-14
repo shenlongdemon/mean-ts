@@ -1,6 +1,9 @@
-import { UserInfo } from '../shared/models/userinfo';
+import { UserInfo } from '../shared/models';
 
 export class BaseService {
+  
+  constructor() {}
+  
   protected STRS = [
     '0123456789',
     'abcdefghij',
@@ -38,14 +41,14 @@ export class BaseService {
       userInfo.country +
       ']' +
       '[' +
-      userInfo.position.coord.latitude +
+      userInfo.position.latitude +
       ',' +
-      userInfo.position.coord.longitude +
+      userInfo.position.longitude +
       ' ' +
-      userInfo.position.coord.altitude +
+      userInfo.position.altitude +
       ']' +
       '[' +
-      userInfo.weather.main.temp +
+      userInfo.weather.temp +
       'C]';
     const code = this.convertCodeToNum(allStr);
     return code;

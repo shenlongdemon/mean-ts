@@ -18,7 +18,7 @@ export abstract class BaseMongo<T> implements GenericRepo<T> {
 
   //we created constructor with arguments to manipulate mongodb operations
   protected constructor(connectionString: string, dbName: string, collectionName: string) {
-    const client: MongoClient = new MongoClient(connectionString);
+    const client: MongoClient = new MongoClient(connectionString,{ useNewUrlParser: true });
     client.connect(
       (error: MongoError, connect: MongoClient): void => {
         if (error) {

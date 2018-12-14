@@ -1,4 +1,4 @@
-export class IObject {
+class IObject {
   id: string;
 
   constructor() {

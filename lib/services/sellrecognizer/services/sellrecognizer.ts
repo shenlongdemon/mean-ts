@@ -2,12 +2,16 @@ import {BaseService} from './baseservice';
 import {CreateMaterialReq, LoginReq} from './requests';
 import sellRepo from '../repositories/sellrecognizerrepo';
 import {BusErr} from '../../models/buserr';
-import {BUS_ERR_CODE} from '../../commons/index';
-import {User, ProcessStep, Material, MaterialProcess, Process} from "../shared/models";
+import {BUS_ERR_CODE, CONSTANTS} from '../../commons/index';
+import {User, ProcessStep, Material, MaterialProcess, Process, DynProperty} from "../shared/models";
 
 const uuid = require('uuid');
 
 class SellRecognizer extends BaseService {
+  
+  constructor() {
+    super();
+  }
   
   login = async (req: LoginReq): Promise<User> => {
     const user: User | null = await sellRepo.getUserForLogin(req.phone, req.password);
@@ -24,6 +28,9 @@ class SellRecognizer extends BaseService {
     }
     
     const processes: Process[] = materialProcess.processSteps.map((processStep: ProcessStep, index: number) => {
+      processStep.dynProperties.forEach((dynProperty: DynProperty, index: number): void => {
+        dynProperty.value = CONSTANTS.STR_EMPTY;
+      });
       const process: Process = {
         ...processStep,
         activities: [],

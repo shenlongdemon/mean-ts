@@ -1,14 +1,4 @@
-import { IObject } from './iobject';
-
-interface WeatherMain {
+export interface Weather {
   temp: number;
-}
-
-interface WeatherSys {
   country: string;
-}
-
-export interface Weather extends IObject {
-  main: WeatherMain;
-  sys: WeatherSys;
 }
