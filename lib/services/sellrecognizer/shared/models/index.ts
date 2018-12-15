@@ -9,3 +9,4 @@ export * from './processstep';
 export * from './user';
 export * from './userinfo';
 export * from './weather';
+export * from './category';

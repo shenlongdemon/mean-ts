@@ -13,7 +13,7 @@ import sellRepo from '../repositories/sellrecognizerrepo';
 import {BusErr} from '../../models/buserr';
 import {CONSTANTS, DateUtil} from '../../commons';
 import {BUS_ERR_CODE} from './commons/errorcode';
-import {DynProperty, Material, MaterialProcess, Process, ProcessStatus, ProcessStep, User} from "../shared/models";
+import {DynProperty, Material, MaterialProcess, Process, ProcessStatus, ProcessStep, User, Category} from "../shared/models";
 
 const uuid = require('uuid');
 
@@ -153,6 +153,11 @@ class SellRecognizer extends BaseService {
       const res: boolean = await sellRepo.insertMaterialProcess(materialProcess);
       return res;
     }
+  }
+  
+  getCategories = async (): Promise<Category[]> => {
+    const categories: Category[] = await sellRepo.getCategories();
+    return categories;
   }
   
   private getMaterial = async (id: string): Promise<Material> => {

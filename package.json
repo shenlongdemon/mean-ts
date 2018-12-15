@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node ./lib/server.ts",
-    "start-prod": "nodemon ./dist/server.js",
+    "start-prod": "npm run deplop-node && nodemon ./dist/server.js",
     "deplop-node": "npm install && npm run build",
     "deploy-web": "cd ./static/portal && npm run deploy",
     "run-prod": "npm run deploy-web && npm run deplop-node && npm run start-prod",

@@ -2,7 +2,9 @@ import {BaseRepo} from '../../../repositories/baserepo';
 import UserRepo from './dbcontext/userrepo';
 import MaterialRepo from './dbcontext/materialrepo';
 import MaterialProcessRepo from './dbcontext/materialprocessrepo';
-import {User, Material, MaterialProcess} from '../shared/models';
+import CategoryRepo from './dbcontext/categoryrepo';
+
+import {User, Material, MaterialProcess, Category} from '../shared/models';
 
 ///<reference path="../services/sellrecognizer.ts"/>
 
@@ -51,6 +53,11 @@ class SellRecognizerRepo extends BaseRepo {
   insertMaterialProcess = async (materialProcess: MaterialProcess): Promise<boolean> => {
     const res: boolean = await MaterialProcessRepo.create(materialProcess);
     return res;
+  }
+  
+  getCategories = async (): Promise<Category[]> => {
+    const categories: Category[] = await CategoryRepo.find({});
+    return categories;
   }
 }
 

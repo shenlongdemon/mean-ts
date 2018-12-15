@@ -8,6 +8,7 @@ const Config = {
     USERS: 'Users',
     MATERIALS: 'Materials',
     MATERIALPROCESSES: 'MaterialProcesses',
+    CATEGORIES: 'Categories'
   }
 };
 
