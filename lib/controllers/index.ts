@@ -105,6 +105,7 @@ export class Controller {
   };
   
   private handleException = (ex: any, request: Request, response: Response): void => {
+    console.log(`Service exception: ${ex.message}`);
     if (ex instanceof BusErr) {
       const res: ApiResult = this.handleError(ex, request, response);
       response.status(HTTP_CODE.OK).json(res);
@@ -132,8 +133,6 @@ export class Controller {
         request: JSON.parse(safeJsonStringify(request)),
       }
     };
-    console.log(safeJsonStringify(res));
-    
     return res;
   };
   
@@ -147,8 +146,6 @@ export class Controller {
         request: JSON.parse(safeJsonStringify(request)),
       }
     };
-    console.log(safeJsonStringify(res));
-    
     return res;
   };
 }

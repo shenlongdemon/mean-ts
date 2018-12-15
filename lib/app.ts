@@ -17,7 +17,7 @@ class App {
   }
 
   private errorRequestHandler = (err: any, request: Request, response: Response, next: NextFunction): any => {
-    console.log('App error: ' + err);
+    console.log(`Server exception: ${err.message}`);
     const res: ApiResult = this.handleError(err, request, response);
     response.status(HTTP_CODE.OK).json(res);
   };
@@ -36,7 +36,6 @@ class App {
   };
 
   private config(): void {
-    console.log('config success');
     this.app.use(cors());
 
     // support application/json type post data

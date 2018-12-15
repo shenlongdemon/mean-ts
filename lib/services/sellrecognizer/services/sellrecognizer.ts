@@ -120,8 +120,8 @@ class SellRecognizer extends BaseService {
     
   }
   
-  getMaterialById = async (req: { id: string }): Promise<Material> => {
-    const material: Material = await this.getMaterial(req.id);
+  getMaterialById = async (req: { id: string }): Promise<Material | null> => {
+    const material: Material | null = await this.getMaterial(req.id);
     return material;
   }
   
@@ -136,16 +136,20 @@ class SellRecognizer extends BaseService {
   }
   
   saveMaterialProcess = async (req: SaveMaterialProcessReq): Promise<boolean | null> => {
+    req.processSteps.forEach((p: ProcessStep): void => {
+      p.id = uuid.v4();
+      p.dynProperties.forEach((d: DynProperty): void => {
+        d.id = uuid.v4();
+      });
+    });
+    
     let materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcessByOwnerId(req.ownerId);
     if (materialProcess) {
-      console.log('MaterialProcess is exists');
       materialProcess.processSteps = req.processSteps;
       const res: boolean = await sellRepo.updateMaterialProcess(materialProcess);
       return res;
     }
     else {
-      console.log('MaterialProcess is new');
-  
       materialProcess = {
         ...req,
         id: uuid.v4()
@@ -160,16 +164,16 @@ class SellRecognizer extends BaseService {
     return categories;
   }
   
-  private getMaterial = async (id: string): Promise<Material> => {
+  private getMaterial = async (id: string): Promise<Material | null> => {
     const material: Material | null = await sellRepo.getMaterialById(id);
-    if (!material) {
-      throw new BusErr(BUS_ERR_CODE.MATERIAL_CANNOT_FOUND())
-    }
     return material;
   }
   
   private getMaterial_Process = async (materialId: string, processId: string): Promise<{ material: Material, process: Process }> => {
-    const material: Material = await this.getMaterial(materialId);
+    const material: Material | null = await this.getMaterial(materialId);
+    if (!material) {
+      throw new BusErr(BUS_ERR_CODE.MATERIAL_CANNOT_FOUND())
+    }
     const process: Process | undefined = material.processes.find((p: Process): boolean => {
       return p.id === processId;
     });
