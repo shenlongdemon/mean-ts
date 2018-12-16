@@ -24,6 +24,15 @@ const BUS_ERR_CODE = {
   },
   WORKER_HAD_ASSIGNED: (): ErrorData => {
     return { code: 1006, message: 'Worker had assigned.' };
+  },
+  CANNOT_CREATE_GOODS: (): ErrorData => {
+    return { code: 1007, message: 'Cannot create goods. Please try again' };
+  },
+  CANNOT_FOUND_GOODS: (): ErrorData => {
+    return { code: 1008, message: 'Cannot identify goods' };
+  },
+  CANNOT_PUBLICH_SELL: (): ErrorData => {
+    return { code: 1009, message: 'Cannot publish to sell. Please try again.' };
   }
 };
 

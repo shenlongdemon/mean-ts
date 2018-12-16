@@ -28,8 +28,8 @@ class App {
       message: 'Internal server error !',
       data: {
         data: JSON.parse(safeJsonStringify(err)),
-        request: JSON.parse(safeJsonStringify(request)),
-        response: JSON.parse(safeJsonStringify(response))
+        response: JSON.parse(safeJsonStringify(response)),
+        request: JSON.parse(safeJsonStringify(request))
       }
     };
     return res;
