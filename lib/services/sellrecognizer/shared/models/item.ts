@@ -8,7 +8,7 @@ import {Section} from "./section";
 
 export interface Item extends IObject{
   name: string;
-  price: string;
+  price: number;
   description: string;
   category: Category;
   imageUrl: string;

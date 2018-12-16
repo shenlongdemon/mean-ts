@@ -177,7 +177,8 @@ class SellRecognizer extends BaseService {
   }
   
   createItem = async (req: CreateItemReq): Promise<Item> => {
-    const sellCode: string = this.genUserInfoCode('SELL', req.owner)
+    const sellCode: string = this.genUserInfoCode('SELL', req.owner);
+
     const item: Item = {
       ...req,
       id: uuid.v4(),
