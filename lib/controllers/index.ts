@@ -76,6 +76,30 @@ export class Controller {
     }
   };
   
+  doPut = async (request: Request, response: Response, next: NextFunction): Promise<void> => {
+    const serviceName: string = request.params.controller.toLowerCase();
+    const actionName: string = request.params.action;
+    const data: any = request.body;
+    const id: string = request.query['id'];
+    try {
+      console.log('POST ' + serviceName + '.' + actionName + '(' + safeJsonStringify(data) + ')');
+      const service = this.getService(serviceName);
+      const req : any = {
+        id: id,
+        data: data
+      };
+      const res: any = await service[actionName](req);
+      const apiResult: ApiResult = {
+        code: API_STATUS_CODE.OK,
+        message: CONSTANTS.STR_EMPTY,
+        data: res
+      };
+      response.status(HTTP_CODE.OK).json(apiResult);
+    } catch (ex) {
+      this.handleException(ex, request, response);
+    }
+  };
+  
   doGet = async (request: Request, response: Response, next: NextFunction): Promise<void> => {
     const serviceName: string = request.params.controller.toLowerCase();
     const actionName: string = request.params.action;

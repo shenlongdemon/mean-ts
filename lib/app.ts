@@ -49,6 +49,7 @@ class App {
     this.app.use(this.errorRequestHandler);
 
     this.app.post('/api/:controller/:action', Controller.doPost);
+    this.app.put('/api/:controller/:action?id=:id', Controller.doPut);
     this.app.get('/api/:controller/:action', Controller.doGet);
     
     this.app.post('/upload/:controller', Controller.doUpload);

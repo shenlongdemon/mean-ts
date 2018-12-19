@@ -3,27 +3,31 @@ import {
   AddActivityReq,
   AssignWorkerReq,
   CreateMaterialReq,
-  LoginReq,
-  UpdateProcessField,
-  UpdateProcessInfoReq,
   DoneProcessReq,
-  SaveMaterialProcessReq
+  LoginReq,
+  SaveMaterialProcessReq,
+  UpdateProcessField,
+  UpdateProcessInfoReq
 } from './requests';
 import sellRepo from '../repositories/sellrecognizerrepo';
 import {BusErr} from '../../models/buserr';
 import {CONSTANTS, DateUtil} from '../../commons';
 import {BUS_ERR_CODE} from './commons/errorcode';
 import {
+  Category,
   DynProperty,
+  Item,
   Material,
   MaterialProcess,
   Process,
   ProcessStatus,
   ProcessStep,
+  TransactionAction,
   User,
-  Category, UserInfo, Item
+  UserInfo
 } from "../shared/models";
 import {CreateItemReq} from "./requests/createitemreq";
+import {UpdateProcessDynPropertiesReq} from "./requests/UpdateProcessDynPropertiesReq";
 
 const uuid = require('uuid');
 
@@ -42,24 +46,25 @@ class SellRecognizer extends BaseService {
   };
   
   createMaterial = async (req: CreateMaterialReq): Promise<Material> => {
-    const materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcessByOwnerId(req.ownerId);
+    const materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcessByOwnerId(req.owner.id);
     if (!materialProcess) {
       throw new BusErr(BUS_ERR_CODE.HAVE_NO_PROCESS_STEP(), req);
     }
     
-    const processes: Process[] = materialProcess.processSteps.map((processStep: ProcessStep, index: number) => {
-      processStep.dynProperties.forEach((dynProperty: DynProperty, index: number): void => {
+    const processes: Process[] = materialProcess.processSteps.map((processStep: ProcessStep) => {
+      processStep.dynProperties.forEach((dynProperty: DynProperty): void => {
         dynProperty.value = CONSTANTS.STR_EMPTY;
         dynProperty.id = uuid.v4();
       });
-      const process: Process = {
+      return {
         ...processStep,
         id: uuid.v4(),
+        code: CONSTANTS.STR_EMPTY,
         status: ProcessStatus.TODO,
         activities: [],
-        workers: []
+        workers: [],
+        updateAt: DateUtil.getTime()
       };
-      return process;
     });
     
     const entity: Material = {
@@ -67,11 +72,11 @@ class SellRecognizer extends BaseService {
       id: uuid.v4(),
       createdAt: DateUtil.getTime(),
       updatedAt: DateUtil.getTime(),
-      code: this.genUserInfoCode('CREATE ' + req.name, req.userInfo),
+      code: this.genUserInfoCode('CREATE ' + req.name, req.owner),
       processes: processes
     };
     
-    const res: boolean = await sellRepo.insertMaterial(entity);
+    await sellRepo.insertMaterial(entity);
     return entity;
   };
   
@@ -87,10 +92,8 @@ class SellRecognizer extends BaseService {
       }
     });
     
-    const res: boolean = await sellRepo.updateMaterial(data.material);
-    return res;
-    
-  }
+    return sellRepo.updateMaterial(data.material);
+  };
   
   assignWorker = async (req: AssignWorkerReq): Promise<boolean> => {
     const user: User | null = await sellRepo.getUserById(req.userId);
@@ -107,18 +110,16 @@ class SellRecognizer extends BaseService {
     }
     data.process.workers.push(user);
     
-    const res: boolean = await sellRepo.updateMaterial(data.material);
-    return res;
-  }
+    return sellRepo.updateMaterial(data.material);
+  };
   
   addActivity = async (req: AddActivityReq): Promise<boolean> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     data.process.activities.push(req.activity);
     data.process.status = ProcessStatus.IN_PROGRESS;
-    const res: boolean = await sellRepo.updateMaterial(data.material);
-    return res;
-    
-  }
+    data.process.updateAt = DateUtil.getTime();
+    return sellRepo.updateMaterial(data.material);
+  };
   
   doneProcess = async (req: DoneProcessReq): Promise<boolean> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
@@ -127,25 +128,29 @@ class SellRecognizer extends BaseService {
     const code: string = this.genUserInfoCode(`[DONE ${data.process.name}]`, req.userInfo);
     data.material.code = code;
     data.material.updatedAt = DateUtil.getTime();
-    const res: boolean = await sellRepo.updateMaterial(data.material);
-    return res;
-    
-  }
+    data.process.code = code;
+    data.process.updateAt = DateUtil.getTime();
+    return sellRepo.updateMaterial(data.material);
+  };
   
   getMaterialById = async (req: { id: string }): Promise<Material | null> => {
-    const material: Material | null = await this.getMaterial(req.id);
-    return material;
-  }
+    return this.getMaterial(req.id);
+  };
   
   getMaterialsByOwnerId = async (req: { id: string }): Promise<Material[]> => {
-    const materials: Material[] = await sellRepo.getMaterialsByOwnerId(req.id);
-    return materials;
-  }
+    return sellRepo.getMaterialsByOwnerId(req.id);
+  };
   
   getMaterialProcessByOwnerId = async (req: { id: string }): Promise<MaterialProcess | null> => {
-    const materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcessByOwnerId(req.id);
-    return materialProcess;
-  }
+    return sellRepo.getMaterialProcessByOwnerId(req.id);
+  };
+  
+  updateProcessDynProperties = async (req: UpdateProcessDynPropertiesReq): Promise<boolean> => {
+    const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
+    data.process.dynProperties = req.properties;
+    data.material.updatedAt = DateUtil.getTime();
+    return sellRepo.updateMaterial(data.material);
+  };
   
   saveMaterialProcess = async (req: SaveMaterialProcessReq): Promise<boolean | null> => {
     req.processSteps.forEach((p: ProcessStep): void => {
@@ -158,38 +163,35 @@ class SellRecognizer extends BaseService {
     let materialProcess: MaterialProcess | null = await sellRepo.getMaterialProcessByOwnerId(req.ownerId);
     if (materialProcess) {
       materialProcess.processSteps = req.processSteps;
-      const res: boolean = await sellRepo.updateMaterialProcess(materialProcess);
-      return res;
+      return sellRepo.updateMaterialProcess(materialProcess);
     }
     else {
       materialProcess = {
         ...req,
         id: uuid.v4()
       };
-      const res: boolean = await sellRepo.insertMaterialProcess(materialProcess);
-      return res;
+      return sellRepo.insertMaterialProcess(materialProcess);
     }
-  }
+  };
   
   getCategories = async (): Promise<Category[]> => {
-    const categories: Category[] = await sellRepo.getCategories();
-    return categories;
-  }
+    return sellRepo.getCategories();
+  };
   
   createItem = async (req: CreateItemReq): Promise<Item> => {
     const sellCode: string = this.genUserInfoCode('SELL', req.owner);
-
+    
     const item: Item = {
       ...req,
       id: uuid.v4(),
       sellCode: sellCode, // the code is generated when user public goods to sell
       buyerCode: CONSTANTS.STR_EMPTY,
       buyer: null,
-      section: {
-        id: uuid.v4(),
-        code: sellCode,
-        histories: [req.owner],
-      },
+      transactions: [
+        {
+          ...req.owner, action: TransactionAction.CREATE
+        }
+      ],
       view3d: CONSTANTS.STR_EMPTY,
       time: DateUtil.getTime(),
       maintains: []
@@ -200,22 +202,24 @@ class SellRecognizer extends BaseService {
       throw new BusErr(BUS_ERR_CODE.CANNOT_CREATE_GOODS());
     }
     return item;
-  }
+  };
   
   publicSell = async (req: { id: string, owner: UserInfo }): Promise<Item> => {
     const item: Item | null = await sellRepo.getItembyId(req.id);
     if (!item) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_FOUND_GOODS());
     }
-    const sellCode: string = this.genUserInfoCode('SELL', req.owner);
-    item.sellCode = sellCode;
-    
+    item.sellCode = this.genUserInfoCode('SELL', req.owner);
+    item.transactions.push({
+      ...req.owner,
+      action: TransactionAction.SELL
+    });
     const res: boolean = await sellRepo.updateItem(item);
     if (!res) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_PUBLICH_SELL());
     }
     return item;
-  }
+  };
   
   cancelSell = async (req: { id: string, owner: UserInfo }): Promise<Item> => {
     const item: Item | null = await sellRepo.getItembyId(req.id);
@@ -226,21 +230,18 @@ class SellRecognizer extends BaseService {
     
     const res: boolean = await sellRepo.updateItem(item);
     if (!res) {
-      throw new BusErr(BUS_ERR_CODE.CANNOT_PUBLICH_SELL());
+      throw new BusErr(BUS_ERR_CODE.CANNOT_CANCEL_SELL());
     }
     return item;
-  }
+  };
   
   getItemsByOwnerId = async (req: { id: string }): Promise<Item[]> => {
-    const items: Item[] = await sellRepo.getItemsByOwnerId(req.id);
-    return items;
-  }
-  
+    return sellRepo.getItemsByOwnerId(req.id);
+  };
   
   private getMaterial = async (id: string): Promise<Material | null> => {
-    const material: Material | null = await sellRepo.getMaterialById(id);
-    return material;
-  }
+    return sellRepo.getMaterialById(id);
+  };
   
   private getMaterial_Process = async (materialId: string, processId: string): Promise<{ material: Material, process: Process }> => {
     const material: Material | null = await this.getMaterial(materialId);

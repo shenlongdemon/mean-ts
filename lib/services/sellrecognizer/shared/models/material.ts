@@ -1,16 +1,16 @@
 import {IObject} from "./iobject";
 import {UserInfo} from "./userinfo";
 import {Process} from "./process";
+import {Bluetooth} from "./bluetooth";
 
-export interface Material extends IObject{
+export interface Material extends IObject {
   name: string;
-  ownerId: string;
   description: string;
   code: string;
-  bluetooth: string;
+  bluetooth: Bluetooth | null;
   imageUrl: string;
   createdAt: number;
   updatedAt: number;
-  userInfo: UserInfo;
+  owner: UserInfo;
   processes: Process[];
 }

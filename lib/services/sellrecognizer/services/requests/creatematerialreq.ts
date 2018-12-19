@@ -1,10 +1,10 @@
 import { UserInfo } from '../../shared/models/userinfo';
+import {Bluetooth} from "../../shared/models";
 
 export interface CreateMaterialReq {
-  ownerId: string;
   name: string;
   description: string;
   imageUrl: string;
-  bluetooth: string;
-  userInfo: UserInfo;
+  bluetooth: Bluetooth | null;
+  owner: UserInfo;
 }

@@ -53,7 +53,8 @@ export abstract class BaseMongo<T> implements GenericRepo<T> {
   
   delete = async (id: string): Promise<boolean> => {
     const result: DeleteWriteOpResultObject = await this.collection.deleteOne({id: id});
-    return !!result.result.ok  }
+    return !!result.result.ok
+  }
   
   find = async (query: {}): Promise<T[]> => {
     const result: Cursor<T> = await this.collection.find(query);

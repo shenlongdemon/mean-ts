@@ -4,7 +4,7 @@ import {Activity} from "./activity";
 import {Material} from "./material";
 import {UserInfo} from "./userinfo";
 import {Bluetooth} from "./bluetooth";
-import {Section} from "./section";
+import {Transaction} from "./transaction";
 
 export interface Item extends IObject{
   name: string;
@@ -14,7 +14,7 @@ export interface Item extends IObject{
   imageUrl: string;
   sellCode: string;
   buyerCode: string;
-  section: Section;
+  transactions: Transaction[];
   owner: UserInfo;
   buyer: UserInfo | null;
   bluetooth: Bluetooth | null;

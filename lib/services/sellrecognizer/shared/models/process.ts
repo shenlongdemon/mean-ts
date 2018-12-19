@@ -8,10 +8,12 @@ enum ProcessStatus {
   DONE = 2
 };
 
-interface Process extends ProcessStep{
+interface Process extends ProcessStep {
+  code: string;
   status: ProcessStatus,
   workers: User[];
   activities: Activity[];
+  updateAt: number;
 }
 
 export {Process, ProcessStatus};

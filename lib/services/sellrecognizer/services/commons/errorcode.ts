@@ -33,6 +33,9 @@ const BUS_ERR_CODE = {
   },
   CANNOT_PUBLICH_SELL: (): ErrorData => {
     return { code: 1009, message: 'Cannot publish to sell. Please try again.' };
+  },
+  CANNOT_CANCEL_SELL: (): ErrorData => {
+    return { code: 1010, message: 'Cannot cancel. Please try again.' };
   }
 };
 

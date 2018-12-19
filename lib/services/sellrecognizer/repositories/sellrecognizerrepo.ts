@@ -42,7 +42,7 @@ class SellRecognizerRepo extends BaseRepo {
   }
   
   getMaterialsByOwnerId = async (id: string): Promise<Material[]> => {
-    const res: Material[] = await MaterialRepo.find({ownerId: id});
+    const res: Material[] = await MaterialRepo.find({'owner.id': id});
     return res;
   }
   
