@@ -13,3 +13,4 @@ export * from './category';
 export * from './item';
 export * from './bluetooth';
 export * from './transaction';
+export * from './objectbycode';

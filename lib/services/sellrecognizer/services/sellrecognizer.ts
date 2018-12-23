@@ -19,6 +19,8 @@ import {
   Item,
   Material,
   MaterialProcess,
+  ObjectByCode,
+  ObjectType,
   Process,
   ProcessStatus,
   ProcessStep,
@@ -239,6 +241,41 @@ class SellRecognizer extends BaseService {
     return sellRepo.getItemsByOwnerId(req.id);
   };
   
+  getObjectByCode = async (req: { code: string }): Promise<ObjectByCode> => {
+    
+    
+    const task_getUserById = sellRepo.getUserById(req.code);
+    const task_getMaterialById = sellRepo.getMaterialById(req.code);
+    const task_getMaterialByCode = sellRepo.getMaterialByCode(req.code);
+    
+    const [user, materialById, materialByCode] = await Promise.all([task_getUserById, task_getMaterialById, task_getMaterialByCode]);
+    let data: ObjectByCode = {
+      item: null,
+      type: ObjectType.unknown
+    };
+    
+    if (user) {
+      data = {
+        item: user,
+        type: ObjectType.user
+      };
+    }
+    else if (materialById) {
+      data = {
+        item: materialById,
+        type: ObjectType.material
+      };
+    }
+    else if (materialByCode) {
+      data = {
+        item: materialByCode,
+        type: ObjectType.material
+      };
+    }
+    
+    return data;
+  }
+  
   private getMaterial = async (id: string): Promise<Material | null> => {
     return sellRepo.getMaterialById(id);
   };
@@ -257,6 +294,7 @@ class SellRecognizer extends BaseService {
     }
     return {material, process};
   }
+  
 }
 
 export default new SellRecognizer();

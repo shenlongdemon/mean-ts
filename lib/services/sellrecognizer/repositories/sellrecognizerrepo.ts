@@ -31,6 +31,13 @@ class SellRecognizerRepo extends BaseRepo {
     return res;
   }
   
+  getMaterialByCode = async (code: string): Promise<Material | null> => {
+    const res: Material | null = await MaterialRepo.findOneBy({
+      code: code
+    });
+    return res;
+  }
+  
   updateMaterial = async (material: Material): Promise<boolean> => {
     const res: boolean = await MaterialRepo.update(material.id, material);
     return res;
