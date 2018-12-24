@@ -1,7 +1,11 @@
-import {Activity} from "../../shared/models";
+import {UserInfo} from "../../shared/models";
 
 export interface AddActivityReq {
   materialId: string;
   processId: string;
-  activity: Activity
+  title: string;
+  description: string;
+  image: string;
+  file: string;
+  userInfo: UserInfo;
 }

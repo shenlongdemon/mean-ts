@@ -36,6 +36,9 @@ const BUS_ERR_CODE = {
   },
   CANNOT_CANCEL_SELL: (): ErrorData => {
     return { code: 1010, message: 'Cannot cancel. Please try again.' };
+  },
+  CANNOT_SAVE: (): ErrorData => {
+    return { code: 1011, message: 'Cannot save. Please try again.' };
   }
 };
 
