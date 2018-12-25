@@ -1,8 +1,10 @@
-import { UserInfo } from '../shared/models';
+import {UserInfo} from '../shared/models';
+import {CONSTANTS} from "../../commons";
 
 export class BaseService {
   
-  constructor() {}
+  constructor() {
+  }
   
   protected STRS = [
     '0123456789',
@@ -15,7 +17,7 @@ export class BaseService {
     "-/ _+'.,;:",
     '[]{}'
   ];
-
+  
   protected genUserInfoCode = (action: string, userInfo: UserInfo): string => {
     const allStr =
       '[' +
@@ -47,7 +49,7 @@ export class BaseService {
     const code = this.convertCodeToNum(allStr);
     return code;
   };
-
+  
   protected convertCodeToNum = (codeStr: string): string => {
     let code = '';
     Array.from(codeStr).map((c, key) => {
@@ -58,12 +60,29 @@ export class BaseService {
             if (idx > -1) {
               code += index + '' + idx;
             }
-          } catch (es) {}
+          } catch (es) {
+          }
         });
       } catch (e) {
         console.log('convertToNum Error ' + e);
       }
     });
     return code;
+  };
+  protected convertCodeToDescription = (codeStr: string): string => {
+    let description = "";
+    let i = 0;
+    try {
+      for (i; i < codeStr.length / 2; i++) {
+        const str = codeStr.substr(i * 2, 2);
+        const idxStrs = parseInt(str.charAt(0));
+        const idxStr = parseInt(str.charAt(1));
+        description += this.STRS[idxStrs].charAt(idxStr);
+      }
+    }
+    catch (e) {
+    
+    }
+    return description;
   };
 }

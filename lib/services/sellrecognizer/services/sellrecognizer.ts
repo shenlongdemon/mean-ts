@@ -147,7 +147,7 @@ class SellRecognizer extends BaseService {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     data.process.status = ProcessStatus.DONE;
     
-    const code: string = this.genUserInfoCode(`[DONE ${data.process.name}]`, req.userInfo);
+    const code: string = this.genUserInfoCode(`DONE ${data.process.name}`, req.userInfo);
     data.material.code = code;
     data.material.updatedAt = DateUtil.getTime();
     data.process.code = code;
@@ -328,6 +328,10 @@ class SellRecognizer extends BaseService {
       return activity.userInfo.id === req.workerId;
     });
   };
+  
+  getCodeDescription = async (req: {code: string}) : Promise<string> => {
+    return this.convertCodeToDescription(req.code);
+  }
 }
 
 export default new SellRecognizer();
