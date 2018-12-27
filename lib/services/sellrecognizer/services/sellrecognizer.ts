@@ -82,7 +82,6 @@ class SellRecognizer extends BaseService {
     await sellRepo.insertMaterial(entity);
     return entity;
   };
-  
   updateProcessInfo = async (req: UpdateProcessInfoReq): Promise<boolean> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     
@@ -203,6 +202,7 @@ class SellRecognizer extends BaseService {
   };
   
   createItem = async (req: CreateItemReq): Promise<Item> => {
+    req.owner.code = this.genUserInfoCode('NEW_ITEM', req.owner);
     const sellCode: string = this.genUserInfoCode('SELL', req.owner);
     
     const item: Item = {
@@ -296,6 +296,19 @@ class SellRecognizer extends BaseService {
     }
     
     return data;
+  };
+  getObjectsByBluetoothIds = async (req: {ids: string[]}) : Promise<ObjectByCode[]> => {
+    const task_getMaterialsByBluetoothIds = sellRepo.getMaterialsByBluetoothIds(req.ids);
+    const [materialsBybluetoothIds] = await Promise.all([task_getMaterialsByBluetoothIds]);
+    
+    const objs: ObjectByCode[] = [];
+  
+    objs.push.apply(objs, materialsBybluetoothIds.map((material: Material): ObjectByCode=> {
+      return {type: ObjectType.material, item: material};
+    }));
+    
+    return objs;
+    
   };
   
   getProcess = async(req: {materialId: string, processId: string}): Promise<Process | null> => {

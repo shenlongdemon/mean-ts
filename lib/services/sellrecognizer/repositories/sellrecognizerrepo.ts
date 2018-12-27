@@ -6,6 +6,7 @@ import CategoryRepo from './dbcontext/categoryrepo';
 import ItemRepo from './dbcontext/itemrepo';
 
 import {User, Material, MaterialProcess, Category, Item} from '../shared/models';
+import materialrepo from "./dbcontext/materialrepo";
 
 ///<reference path="../services/sellrecognizer.ts"/>
 
@@ -85,6 +86,11 @@ class SellRecognizerRepo extends BaseRepo {
   
   getItemsByOwnerId = async (ownerId: string): Promise<Item[]> => {
     const res: Item[] = await ItemRepo.find({'owner.id': ownerId});
+    return res;
+  }
+  
+  getMaterialsByBluetoothIds = async (ids: string[]) : Promise<Material[]> => {
+    const res: Material[] = await materialrepo.find({'bluetooth.id': { "$in": ids } });
     return res;
   }
 }
