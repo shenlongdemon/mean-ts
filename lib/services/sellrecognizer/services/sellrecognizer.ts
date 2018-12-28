@@ -209,7 +209,6 @@ class SellRecognizer extends BaseService {
       ...req,
       id: uuid.v4(),
       sellCode: sellCode, // the code is generated when user public goods to sell
-      buyerCode: CONSTANTS.STR_EMPTY,
       buyer: null,
       transactions: [
         {
@@ -314,6 +313,10 @@ class SellRecognizer extends BaseService {
   getProcess = async(req: {materialId: string, processId: string}): Promise<Process | null> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     return data.process;
+  };
+  
+  getItemById = async(req: {id: string}) : Promise<Item | null> => {
+    return sellRepo.getItembyId(req.id);
   };
   
   private getMaterial = async (id: string): Promise<Material | null> => {

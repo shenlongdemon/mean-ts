@@ -13,7 +13,6 @@ export interface Item extends IObject{
   category: Category;
   imageUrl: string;
   sellCode: string;
-  buyerCode: string;
   transactions: Transaction[];
   owner: UserInfo;
   buyer: UserInfo | null;
