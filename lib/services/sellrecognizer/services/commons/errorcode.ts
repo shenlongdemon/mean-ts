@@ -39,7 +39,10 @@ const BUS_ERR_CODE = {
   },
   CANNOT_SAVE: (): ErrorData => {
     return { code: 1011, message: 'Cannot save. Please try again.' };
-  }
+  },
+  ITEM_CANNOT_FOUND: (): ErrorData => {
+    return { code: 1012, message: 'Item cannot be found.' };
+  },
 };
 
 export { BUS_ERR_CODE };

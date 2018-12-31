@@ -1,6 +1,6 @@
 import {BaseService} from './baseservice';
 import {
-  AddActivityReq,
+  AddActivityReq, AddMaintainReq,
   AssignWorkerReq,
   CreateMaterialReq,
   DoneProcessReq,
@@ -141,7 +141,28 @@ class SellRecognizer extends BaseService {
     }
     return ok;
   };
-  
+  addMaintain = async (req: AddMaintainReq): Promise<boolean> => {
+    req.userInfo.code = this.genUserInfoCode(`[MAINTAIN-${req.title}]`,req.userInfo);;
+    const activity: Activity = {
+      id: uuid.v4(),
+      title: req.title,
+      description: req.description,
+      image: req.image,
+      file: req.file,
+      userInfo: req.userInfo,
+      time: DateUtil.getTime()
+    };
+    const item: Item | null = await sellRepo.getItembyId(req.itemId);
+    if (!item) {
+      throw new BusErr(BUS_ERR_CODE.ITEM_CANNOT_FOUND());
+    }
+    item.maintains.push(activity);
+    const ok : boolean = await  sellRepo.updateItem(item);
+    if (!ok) {
+      throw new BusErr(BUS_ERR_CODE.CANNOT_SAVE());
+    }
+    return ok;
+  };
   doneProcess = async (req: DoneProcessReq): Promise<boolean> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     data.process.status = ProcessStatus.DONE;
