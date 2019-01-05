@@ -1,6 +1,7 @@
 import {BaseService} from './baseservice';
 import {
-  AddActivityReq, AddMaintainReq,
+  AddActivityReq,
+  AddMaintainReq,
   AssignWorkerReq,
   CreateMaterialReq,
   DoneProcessReq,
@@ -25,12 +26,14 @@ import {
   Process,
   ProcessStatus,
   ProcessStep,
+  Transaction,
   TransactionAction,
   User,
   UserInfo
 } from "../shared/models";
 import {CreateItemReq} from "./requests/createitemreq";
 import {UpdateProcessDynPropertiesReq} from "./requests/UpdateProcessDynPropertiesReq";
+import {ITEM_ACTION} from "./commons/constant";
 
 const uuid = require('uuid');
 
@@ -39,6 +42,48 @@ class SellRecognizer extends BaseService {
   constructor() {
     super();
   }
+  
+  doItemAction = async (req: { id: string, action: ITEM_ACTION, userInfo: UserInfo }): Promise<Item> => {
+    const item: Item = await this.getItem(req.id);
+    item.buyer = null;
+    if (req.action === ITEM_ACTION.CANCEL) {
+      if (item.buyer) {
+        throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
+      }
+      item.sellCode = CONSTANTS.STR_EMPTY;
+      req.userInfo.code = this.genUserInfoCode(`CANCEL-${item.name}`, req.userInfo);
+    }
+    else if (req.action === ITEM_ACTION.PUBLISH) {
+      if (item.owner.id !== req.userInfo.id) {
+        throw new BusErr(BUS_ERR_CODE.ITEM_NOT_YOURS());
+      }
+      item.sellCode = this.genUserInfoCode(`SELL-${item.name}`, req.userInfo);
+      req.userInfo.code = item.sellCode;
+    }
+    else if (req.action === ITEM_ACTION.BUY) {
+      if (item.buyer) {
+        throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
+      }
+      req.userInfo.code = this.genUserInfoCode(`BUY-${item.name}`, req.userInfo);
+      item.buyer = req.userInfo;
+    }
+    else if (req.action === ITEM_ACTION.RECEIVE) {
+      if (item.buyer && item.buyer!.id !== req.userInfo.id) {
+        throw new BusErr(BUS_ERR_CODE.ITEM_NOT_YOURS());
+      }
+      req.userInfo.code = this.genUserInfoCode(`RECEIVE-${item.name}`, req.userInfo);
+      item.owner = req.userInfo;
+      const transaction: Transaction = {
+        ...req.userInfo,
+        action: TransactionAction.BUY
+      };
+      item.transactions.push(transaction);
+    }
+    item.code = req.userInfo.code;
+    
+    await sellRepo.updateItem(item);
+    return item;
+  };
   
   login = async (req: LoginReq): Promise<User> => {
     const user: User | null = await sellRepo.getUserForLogin(req.phone, req.password);
@@ -121,7 +166,8 @@ class SellRecognizer extends BaseService {
   
   addActivity = async (req: AddActivityReq): Promise<boolean> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
-    req.userInfo.code = this.genUserInfoCode(`[ACT-${req.title}]`,req.userInfo);;
+    req.userInfo.code = this.genUserInfoCode(`[ACT-${req.title}]`, req.userInfo);
+    ;
     const activity: Activity = {
       id: uuid.v4(),
       title: req.title,
@@ -135,14 +181,14 @@ class SellRecognizer extends BaseService {
     data.process.status = ProcessStatus.IN_PROGRESS;
     data.process.updateAt = DateUtil.getTime();
     data.material.updatedAt = DateUtil.getTime();
-    const ok : boolean = await  sellRepo.updateMaterial(data.material);
+    const ok: boolean = await sellRepo.updateMaterial(data.material);
     if (!ok) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_SAVE());
     }
     return ok;
   };
   addMaintain = async (req: AddMaintainReq): Promise<boolean> => {
-    req.userInfo.code = this.genUserInfoCode(`[MAINTAIN-${req.title}]`,req.userInfo);;
+    req.userInfo.code = this.genUserInfoCode(`MAINTAIN-${req.title}`, req.userInfo);
     const activity: Activity = {
       id: uuid.v4(),
       title: req.title,
@@ -152,12 +198,9 @@ class SellRecognizer extends BaseService {
       userInfo: req.userInfo,
       time: DateUtil.getTime()
     };
-    const item: Item | null = await sellRepo.getItembyId(req.itemId);
-    if (!item) {
-      throw new BusErr(BUS_ERR_CODE.ITEM_CANNOT_FOUND());
-    }
+    const item: Item = await this.getItem(req.itemId);
     item.maintains.push(activity);
-    const ok : boolean = await  sellRepo.updateItem(item);
+    const ok: boolean = await sellRepo.updateItem(item);
     if (!ok) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_SAVE());
     }
@@ -229,6 +272,7 @@ class SellRecognizer extends BaseService {
     const item: Item = {
       ...req,
       id: uuid.v4(),
+      code: sellCode,
       sellCode: sellCode, // the code is generated when user public goods to sell
       buyer: null,
       transactions: [
@@ -317,13 +361,13 @@ class SellRecognizer extends BaseService {
     
     return data;
   };
-  getObjectsByBluetoothIds = async (req: {ids: string[]}) : Promise<ObjectByCode[]> => {
+  getObjectsByBluetoothIds = async (req: { ids: string[] }): Promise<ObjectByCode[]> => {
     const task_getMaterialsByBluetoothIds = sellRepo.getMaterialsByBluetoothIds(req.ids);
     const [materialsBybluetoothIds] = await Promise.all([task_getMaterialsByBluetoothIds]);
     
     const objs: ObjectByCode[] = [];
-  
-    objs.push.apply(objs, materialsBybluetoothIds.map((material: Material): ObjectByCode=> {
+    
+    objs.push.apply(objs, materialsBybluetoothIds.map((material: Material): ObjectByCode => {
       return {type: ObjectType.material, item: material};
     }));
     
@@ -331,17 +375,25 @@ class SellRecognizer extends BaseService {
     
   };
   
-  getProcess = async(req: {materialId: string, processId: string}): Promise<Process | null> => {
+  getProcess = async (req: { materialId: string, processId: string }): Promise<Process | null> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     return data.process;
   };
   
-  getItemById = async(req: {id: string}) : Promise<Item | null> => {
+  getItemById = async (req: { id: string }): Promise<Item | null> => {
     return sellRepo.getItembyId(req.id);
   };
   
   private getMaterial = async (id: string): Promise<Material | null> => {
     return sellRepo.getMaterialById(id);
+  };
+  
+  private getItem = async (itemId: string): Promise<Item> => {
+    const item: Item | null = await sellRepo.getItembyId(itemId);
+    if (!item) {
+      throw new BusErr(BUS_ERR_CODE.ITEM_CANNOT_FOUND());
+    }
+    return item;
   };
   
   private getMaterial_Process = async (materialId: string, processId: string): Promise<{ material: Material, process: Process }> => {
@@ -359,14 +411,14 @@ class SellRecognizer extends BaseService {
     return {material, process};
   }
   
-  getActivities = async (req: {materialId: string, processId: string, workerId: string}): Promise<Activity[]> => {
+  getActivities = async (req: { materialId: string, processId: string, workerId: string }): Promise<Activity[]> => {
     const data: { material: Material, process: Process } = await this.getMaterial_Process(req.materialId, req.processId);
     return data.process.activities.filter((activity: Activity): boolean => {
       return activity.userInfo.id === req.workerId;
     });
   };
   
-  getCodeDescription = async (req: {code: string}) : Promise<string> => {
+  getCodeDescription = async (req: { code: string }): Promise<string> => {
     return this.convertCodeToDescription(req.code);
   }
 }

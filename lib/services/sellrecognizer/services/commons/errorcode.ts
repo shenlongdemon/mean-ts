@@ -43,6 +43,13 @@ const BUS_ERR_CODE = {
   ITEM_CANNOT_FOUND: (): ErrorData => {
     return { code: 1012, message: 'Item cannot be found.' };
   },
+  BOUGHT_BY_OTHER: (): ErrorData => {
+    return { code: 1012, message: 'Item is bought by other' };
+  },
+  ITEM_NOT_YOURS: (): ErrorData => {
+    return { code: 1012, message: 'Item is not yours' };
+  },
+  
 };
 
 export { BUS_ERR_CODE };
