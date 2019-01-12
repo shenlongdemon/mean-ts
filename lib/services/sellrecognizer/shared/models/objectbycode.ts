@@ -3,7 +3,8 @@ export enum ObjectType {
   material = 1,
   product = 2,
   user = 3,
-  bluetooth = 4
+  bluetooth = 4,
+  item = 5
 }
 
 export interface ObjectByCode {

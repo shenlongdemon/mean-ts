@@ -22,4 +22,6 @@ export interface Item extends IObject{
   material: Material | null;
   time: number;
   maintains: Activity[];
+  createdAt: number;
+  updatedAt: number;
 }

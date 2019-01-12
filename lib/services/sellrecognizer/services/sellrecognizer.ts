@@ -34,6 +34,7 @@ import {
 import {CreateItemReq} from "./requests/createitemreq";
 import {UpdateProcessDynPropertiesReq} from "./requests/UpdateProcessDynPropertiesReq";
 import {ITEM_ACTION} from "./commons/constant";
+import {isBoolean} from "util";
 
 const uuid = require('uuid');
 
@@ -43,9 +44,45 @@ class SellRecognizer extends BaseService {
     super();
   }
   
+  getActivity = async (req: { activityId: string, itemId: string, materialId: string, processId: string }): Promise<Activity | null> => {
+    const getActvityInMaintain = this.getActivityInMaintain(req.itemId, req.activityId);
+    const getActvityInMaterial = this.getActivityInMaterial(req.materialId, req.processId, req.activityId);
+    const [item, material] = await Promise.all([getActvityInMaintain, getActvityInMaterial]);
+    
+    let activity: Activity | null = null;
+    if (item) {
+      activity = item.maintains.find((act: Activity): boolean => {
+        return act.id === req.activityId
+      }) || null;
+    }
+    else if (material) {
+      const activities: Activity[] = [];
+      material.processes.forEach((process: Process): void => {
+        activities.push.apply(activities, process.activities);
+      });
+      
+      activity = activities.find((act: Activity): boolean => {
+        return act.id === req.activityId
+      }) || null;
+    }
+    
+    return activity;
+  };
+  
+  getActivityInMaintain = async (itemId: string, activityId: string): Promise<Item | null> => {
+    return sellRepo.getActivityInMaintain(itemId, activityId);
+  };
+  
+  getActivityInMaterial = async (materialId: string, processId: string, activityId: string): Promise<Material | null> => {
+    return sellRepo.getActivityInMaterial(materialId, processId, activityId);
+  };
+  
+  getProducts = async (req: { categoryId: string }): Promise<Item[]> => {
+    return sellRepo.getPublishItems(req.categoryId);
+  };
+  
   doItemAction = async (req: { id: string, action: ITEM_ACTION, userInfo: UserInfo }): Promise<Item> => {
     const item: Item = await this.getItem(req.id);
-    item.buyer = null;
     if (req.action === ITEM_ACTION.CANCEL) {
       if (item.buyer) {
         throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
@@ -57,10 +94,16 @@ class SellRecognizer extends BaseService {
       if (item.owner.id !== req.userInfo.id) {
         throw new BusErr(BUS_ERR_CODE.ITEM_NOT_YOURS());
       }
+      if (item.buyer) {
+        throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
+      }
       item.sellCode = this.genUserInfoCode(`SELL-${item.name}`, req.userInfo);
       req.userInfo.code = item.sellCode;
     }
     else if (req.action === ITEM_ACTION.BUY) {
+      if (!item.sellCode.length) {
+        throw new BusErr(BUS_ERR_CODE.ITEM_CANNOT_FOUND());
+      }
       if (item.buyer) {
         throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
       }
@@ -68,6 +111,9 @@ class SellRecognizer extends BaseService {
       item.buyer = req.userInfo;
     }
     else if (req.action === ITEM_ACTION.RECEIVE) {
+      if (!item.buyer) {
+        throw new BusErr(BUS_ERR_CODE.ITEM_CANNOT_FOUND());
+      }
       if (item.buyer && item.buyer!.id !== req.userInfo.id) {
         throw new BusErr(BUS_ERR_CODE.ITEM_NOT_YOURS());
       }
@@ -80,7 +126,7 @@ class SellRecognizer extends BaseService {
       item.transactions.push(transaction);
     }
     item.code = req.userInfo.code;
-    
+    item.updatedAt = DateUtil.getTime();
     await sellRepo.updateItem(item);
     return item;
   };
@@ -200,6 +246,7 @@ class SellRecognizer extends BaseService {
     };
     const item: Item = await this.getItem(req.itemId);
     item.maintains.push(activity);
+    item.updatedAt = DateUtil.getTime();
     const ok: boolean = await sellRepo.updateItem(item);
     if (!ok) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_SAVE());
@@ -282,7 +329,9 @@ class SellRecognizer extends BaseService {
       ],
       view3d: CONSTANTS.STR_EMPTY,
       time: DateUtil.getTime(),
-      maintains: []
+      maintains: [],
+      updatedAt: DateUtil.getTime(),
+      createdAt: DateUtil.getTime()
     };
     
     const res: boolean = await sellRepo.createItem(item);
@@ -302,6 +351,7 @@ class SellRecognizer extends BaseService {
       ...req.owner,
       action: TransactionAction.SELL
     });
+    item.updatedAt = DateUtil.getTime();
     const res: boolean = await sellRepo.updateItem(item);
     if (!res) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_PUBLICH_SELL());
@@ -315,7 +365,7 @@ class SellRecognizer extends BaseService {
       throw new BusErr(BUS_ERR_CODE.CANNOT_FOUND_GOODS());
     }
     item.sellCode = CONSTANTS.STR_EMPTY;
-    
+    item.updatedAt = DateUtil.getTime();
     const res: boolean = await sellRepo.updateItem(item);
     if (!res) {
       throw new BusErr(BUS_ERR_CODE.CANNOT_CANCEL_SELL());
@@ -333,8 +383,10 @@ class SellRecognizer extends BaseService {
     const task_getUserById = sellRepo.getUserById(req.code);
     const task_getMaterialById = sellRepo.getMaterialById(req.code);
     const task_getMaterialByCode = sellRepo.getMaterialByCode(req.code);
+    const task_getItemById = sellRepo.getItembyId(req.code);
+    const task_getItemByCode = sellRepo.getItemByCode(req.code);
     
-    const [user, materialById, materialByCode] = await Promise.all([task_getUserById, task_getMaterialById, task_getMaterialByCode]);
+    const [user, materialById, materialByCode, itemById, itemByCode] = await Promise.all([task_getUserById, task_getMaterialById, task_getMaterialByCode, task_getItemById, task_getItemByCode]);
     let data: ObjectByCode = {
       item: null,
       type: ObjectType.unknown
@@ -358,17 +410,33 @@ class SellRecognizer extends BaseService {
         type: ObjectType.material
       };
     }
-    
+    else if (itemById) {
+      data = {
+        item: itemById,
+        type: ObjectType.item
+      };
+    }
+    else if (itemByCode) {
+      data = {
+        item: itemByCode,
+        type: ObjectType.item
+      };
+    }
     return data;
   };
   getObjectsByBluetoothIds = async (req: { ids: string[] }): Promise<ObjectByCode[]> => {
     const task_getMaterialsByBluetoothIds = sellRepo.getMaterialsByBluetoothIds(req.ids);
-    const [materialsBybluetoothIds] = await Promise.all([task_getMaterialsByBluetoothIds]);
+    const task_getItemsByBluetoothIds = sellRepo.getItemsByBluetoothIds(req.ids);
+    const [materialsBybluetoothIds, itemsBybluetoothIds] = await Promise.all([task_getMaterialsByBluetoothIds, task_getItemsByBluetoothIds]);
     
     const objs: ObjectByCode[] = [];
     
     objs.push.apply(objs, materialsBybluetoothIds.map((material: Material): ObjectByCode => {
       return {type: ObjectType.material, item: material};
+    }));
+    
+    objs.push.apply(objs, itemsBybluetoothIds.map((item: Item): ObjectByCode => {
+      return {type: ObjectType.item, item: item};
     }));
     
     return objs;
