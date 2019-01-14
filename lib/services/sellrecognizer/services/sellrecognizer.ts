@@ -54,6 +54,17 @@ class SellRecognizer extends BaseService {
       activity = item.maintains.find((act: Activity): boolean => {
         return act.id === req.activityId
       }) || null;
+      
+      if (!activity && item.material) {
+        const activities: Activity[] = [];
+        item.material.processes.forEach((process: Process): void => {
+          activities.push.apply(activities, process.activities);
+        });
+  
+        activity = activities.find((act: Activity): boolean => {
+          return act.id === req.activityId
+        }) || null;
+      }
     }
     else if (material) {
       const activities: Activity[] = [];
@@ -83,6 +94,7 @@ class SellRecognizer extends BaseService {
   
   doItemAction = async (req: { id: string, action: ITEM_ACTION, userInfo: UserInfo }): Promise<Item> => {
     const item: Item = await this.getItem(req.id);
+    req.userInfo.time = DateUtil.getTime();
     if (req.action === ITEM_ACTION.CANCEL) {
       if (item.buyer) {
         throw new BusErr(BUS_ERR_CODE.BOUGHT_BY_OTHER());
@@ -119,6 +131,7 @@ class SellRecognizer extends BaseService {
       }
       req.userInfo.code = this.genUserInfoCode(`RECEIVE-${item.name}`, req.userInfo);
       item.owner = req.userInfo;
+      item.buyer = null;
       const transaction: Transaction = {
         ...req.userInfo,
         action: TransactionAction.BUY

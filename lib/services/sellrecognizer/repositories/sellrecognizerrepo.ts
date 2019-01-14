@@ -87,12 +87,12 @@ class SellRecognizerRepo extends BaseRepo {
   };
   
   getItemByCode = async (code: string): Promise<Item | null> => {
-  
+    
     const query: any[] = [
       {id: code},
       {code: code},
       {sellCode: code},
-      
+    
     ];
     return ItemRepo.findOneBy({$or: query});
   };
@@ -149,7 +149,13 @@ class SellRecognizerRepo extends BaseRepo {
   getActivityInMaintain = async (itemId: string, activityId: string): Promise<Item | null> => {
     const query: any[] = [
       {id: itemId},
-      {'maintains.id': activityId}
+      {
+        $or: [
+          {'maintains.id': activityId},
+          {'material.processes.activities.id': activityId}
+        ]
+      }
+    
     ];
     return ItemRepo.findOneBy({$and: query});
   };
