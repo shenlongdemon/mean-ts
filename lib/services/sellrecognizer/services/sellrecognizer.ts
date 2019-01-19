@@ -29,12 +29,16 @@ import {
   Transaction,
   TransactionAction,
   User,
-  UserInfo
+  UserInfo,
+  Position, Bluetooth
 } from "../shared/models";
 import {CreateItemReq} from "./requests/createitemreq";
 import {UpdateProcessDynPropertiesReq} from "./requests/UpdateProcessDynPropertiesReq";
 import {ITEM_ACTION} from "./commons/constant";
-import {isBoolean} from "util";
+import {LocationUtil} from "../../commons/locationutil";
+import {TransformCallback} from "stream";
+import {Tracking} from "../shared/models/Tracking";
+import {Feature, Point, Polygon} from "@turf/helpers";
 
 const uuid = require('uuid');
 
@@ -60,7 +64,7 @@ class SellRecognizer extends BaseService {
         item.material.processes.forEach((process: Process): void => {
           activities.push.apply(activities, process.activities);
         });
-  
+        
         activity = activities.find((act: Activity): boolean => {
           return act.id === req.activityId
         }) || null;
@@ -344,7 +348,11 @@ class SellRecognizer extends BaseService {
       time: DateUtil.getTime(),
       maintains: [],
       updatedAt: DateUtil.getTime(),
-      createdAt: DateUtil.getTime()
+      createdAt: DateUtil.getTime(),
+      location: {
+        polygon: null,
+        trackings: []
+      }
     };
     
     const res: boolean = await sellRepo.createItem(item);
@@ -502,6 +510,50 @@ class SellRecognizer extends BaseService {
   getCodeDescription = async (req: { code: string }): Promise<string> => {
     return this.convertCodeToDescription(req.code);
   }
+  
+  getTrackings = async (req: { bluetooths: Bluetooth[], userId: string}): Promise<Item[]> => {
+    const bluetoothIds: string[] = req.bluetooths.map((ble: Bluetooth): string => {
+      return ble.id;
+    });
+    const items: Item[] = await sellRepo.getItemsByBluetoothIds(bluetoothIds);
+    if (items.length === 0) {
+      return [];
+    }
+    const time: number = DateUtil.getTime();
+    const tasks = items.map((item: Item): Promise<Item> => {
+      const bluetooth: Bluetooth | null | undefined = req.bluetooths.find((ble: Bluetooth): boolean => {
+        return ble.id === item.bluetooth!.id
+        || ble.mac === item.bluetooth!.id
+        || ble.proximityUUID === item.bluetooth!.id
+      });
+      return this.getTracking(item, time, req.userId, bluetooth!.position!);
+    });
+    return Promise.all(tasks);
+  };
+  
+  private getTracking = async (item: Item, time: number, userId: string, position: Position): Promise<Item> => {
+    const tracking: Tracking = {
+      ...position,
+      ownerId: userId,
+      time
+    };
+    const currentTrackings: Tracking[] = item.location.trackings.filter((t: Tracking): boolean => {
+      return t.ownerId !== userId && time - t.time < 10000;
+    });
+    currentTrackings.splice(0, 0, tracking);
+    const polygon: Feature<Polygon | null> | null = LocationUtil.getCenterOfCircles(currentTrackings.map((tracking: Tracking): any => {
+      return {
+        lat: tracking.latitude,
+        lon: tracking.longitude,
+        radius: tracking.distance
+      }
+    }));
+    item.location.polygon = polygon;
+    item.location.trackings = currentTrackings;
+    await sellRepo.updateItem(item);
+    
+    return item;
+  };
 }
 
 export default new SellRecognizer();

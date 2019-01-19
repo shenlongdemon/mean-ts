@@ -5,6 +5,7 @@ import {Material} from "./material";
 import {UserInfo} from "./userinfo";
 import {Bluetooth} from "./bluetooth";
 import {Transaction} from "./transaction";
+import {LocationTracking} from "./locationtracking";
 
 export interface Item extends IObject{
   name: string;
@@ -24,4 +25,5 @@ export interface Item extends IObject{
   maintains: Activity[];
   createdAt: number;
   updatedAt: number;
+  location: LocationTracking;
 }
