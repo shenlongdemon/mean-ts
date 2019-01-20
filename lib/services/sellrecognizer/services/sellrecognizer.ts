@@ -526,12 +526,18 @@ class SellRecognizer extends BaseService {
         || ble.mac === item.bluetooth!.id
         || ble.proximityUUID === item.bluetooth!.id
       });
-      return this.getTracking(item, time, req.userId, bluetooth!.position!);
+      return this.getTracking(item, time, req.userId, bluetooth);
+    }).filter((t: any | null): boolean => {
+      return !!t;
     });
     return Promise.all(tasks);
   };
   
-  private getTracking = async (item: Item, time: number, userId: string, position: Position): Promise<Item> => {
+  private getTracking = async (item: Item, time: number, userId: string, bluetooth: Bluetooth | null | undefined): Promise<Item> => {
+    if (!bluetooth || !bluetooth.position){
+      return item;
+    }
+    const position: Position = bluetooth!.position!;
     const tracking: Tracking = {
       ...position,
       ownerId: userId,
@@ -551,7 +557,6 @@ class SellRecognizer extends BaseService {
     item.location.polygon = polygon;
     item.location.trackings = currentTrackings;
     await sellRepo.updateItem(item);
-    
     return item;
   };
 }
